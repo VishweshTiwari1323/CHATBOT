@@ -3,15 +3,12 @@ from django.contrib.auth.models import User
 
 
 class Profile(models.Model):
-
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         related_name="profile"
     )
-
     bio = models.TextField(blank=True)
-
     image = models.ImageField(
         upload_to="profile_pictures/",
         blank=True,
@@ -23,19 +20,13 @@ class Profile(models.Model):
 
 
 class ChatSession(models.Model):
-    """A single conversation thread. A user can have many of these —
-    this is what powers 'New Chat' and the 'Recent Chats' list."""
-
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="chat_sessions"
     )
-
     title = models.CharField(max_length=100, default="New Chat")
-
     created_at = models.DateTimeField(auto_now_add=True)
-
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -46,13 +37,11 @@ class ChatSession(models.Model):
 
 
 class ChatMessage(models.Model):
-
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="chat_messages"
     )
-
     session = models.ForeignKey(
         ChatSession,
         on_delete=models.CASCADE,
@@ -60,13 +49,9 @@ class ChatMessage(models.Model):
         null=True,
         blank=True
     )
-
     message = models.TextField()
-
     response = models.TextField()
-
     is_saved = models.BooleanField(default=False)
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -77,25 +62,18 @@ class ChatMessage(models.Model):
 
 
 class GeneratedImage(models.Model):
-    """Stores each image-generation result so it can be shown in the
-    Image Generation panel's gallery."""
-
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="generated_images"
     )
-
     prompt = models.CharField(max_length=500)
-
     image_url = models.URLField(max_length=1000, blank=True, null=True)
-
     image_file = models.ImageField(
         upload_to="generated_images/",
         blank=True,
         null=True
     )
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -103,17 +81,10 @@ class GeneratedImage(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.prompt[:40]}"
-    class UserActivity(models.Model):
 
-     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    action = models.CharField(max_length=255) # e.g., "Generated an image", "Sent a chat message"
-    created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.user.username} - {self.action}"
-
-    class UserActivity(models.Model):
-        user = models.ForeignKey(User, on_delete=models.CASCADE)
+class UserActivity(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     action = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
