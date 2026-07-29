@@ -2,9 +2,14 @@ from django.urls import path
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
+from django.shortcuts import redirect
 
 
 urlpatterns = [
+    # Automatically redirect homepage '/' to '/login/'
+    path('', lambda request: redirect('login', permanent=False)),
+    
+   
 
     path("", views.home, name="home"),
 
