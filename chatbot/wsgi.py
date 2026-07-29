@@ -1,23 +1,21 @@
 import os
 import sys
 from pathlib import Path
-from django.core.wsgi import get_wsgi_application
-from django.core.management import call_command
 
-# Ensure BASE_DIR is in sys.path
+# Path to the directory containing manage.py and APICHAT
 BASE_DIR = Path(__file__).resolve().parent.parent
-sys.path.append(str(BASE_DIR))
+
+# Force Python to search BASE_DIR for 'APICHAT' and 'chatbot'
+sys_path_str = str(BASE_DIR)
+if sys_path_str not in sys.path:
+    sys.path.insert(0, sys_path_str)
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'chatbot.settings')
 
-# Initialize Django WSGI application
+from django.core.wsgi import get_wsgi_application
+
+# Initialize WSGI application
 application = get_wsgi_application()
 
-# Automatically create database tables in /tmp/db.sqlite3 on Vercel cold starts
-if os.environ.get('VERCEL'):
-    try:
-        call_command('migrate', interactive=False)
-    except Exception as e:
-        print(f"Migration warning: {e}")
-
+# Vercel serverless entrypoint
 app = application
