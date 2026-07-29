@@ -99,6 +99,9 @@ USE_TZ = True
 # Static files configuration
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [
+    BASE_DIR / 'APICHAT' / 'static'
+]
 
 # Media files configuration (Redirects to /tmp/media on Vercel)
 MEDIA_URL = '/media/'
