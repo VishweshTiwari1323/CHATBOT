@@ -11,10 +11,6 @@ from io import BytesIO
 from datetime import datetime, date
 import re
 
-from PIL import Image
-import numpy as np
-import imageio
-
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -30,6 +26,21 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.db.models import Q
 
+# Safe imports for optional AI/Media libraries
+try:
+    import google.generativeai as genai
+except ImportError:
+    genai = None
+
+try:
+    from PIL import Image
+    import numpy as np
+    import imageio
+except ImportError:
+    Image = None
+    np = None
+    imageio = None
+
 from .models import ChatMessage, Profile
 from .forms import RegistrationForm, ProfileForm
 
@@ -38,8 +49,9 @@ from .forms import RegistrationForm, ProfileForm
 # -----------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 env_path = BASE_DIR / 'APICHAT' / 'API.env'
-load_dotenv(dotenv_path=env_path)
-load_dotenv(dotenv_path=env_path, override=True)
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path)
+    load_dotenv(dotenv_path=env_path, override=True)
 
 
 # -----------------------------
@@ -47,19 +59,16 @@ load_dotenv(dotenv_path=env_path, override=True)
 # -----------------------------
 def get_weather(city_name):
     """Fetches real-time weather details for a given city using OpenWeatherMap."""
-    api_key = os.getenv("OPENWEATHER_API_KEY")
+    api_key = os.getenv("OPENWEATHER_API_KEY", "9770a02a17080340645567777fdd4840")
     if not api_key:
-        print("❌ Weather Error: OPENWEATHER_API_KEY not found in environment variables.")
-        return "⚠️ Weather API key is missing. Please add `OPENWEATHER_API_KEY=your_key` to your `APICHAT/API.env` file."
+        return "⚠️ Weather API key is missing."
 
-    url = f"https://api.openweathermap.org/data/2.5/weather?q=Delhi&appid=9770a02a17080340645567777fdd4840&units=metric "
+    encoded_city = urllib.parse.quote(city_name)
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={encoded_city}&appid={api_key}&units=metric"
 
     try:
         response = requests.get(url, timeout=10)
         data = response.json()
-
-        # Debug print to terminal
-        print(f"DEBUG Weather Query for '{city_name}': Status {response.status_code}")
 
         if response.status_code == 200:
             city = data["name"]
@@ -78,12 +87,10 @@ def get_weather(city_name):
                 f"* **Wind Speed:** {wind_speed} m/s"
             )
         elif response.status_code == 401:
-            print(f"❌ OpenWeather API Error 401: {data.get('message')}")
-            return "⚠️ OpenWeather API key is invalid or still activating. New keys take up to 1 hour to activate."
+            return "⚠️ OpenWeather API key is invalid or still activating."
         elif response.status_code == 404:
             return f"Sorry, I couldn't find weather data for '{city_name}'. Please check the city spelling."
         else:
-            print(f"❌ OpenWeather HTTP Error {response.status_code}: {data}")
             return "Unable to fetch weather information right now."
 
     except Exception as e:
@@ -167,7 +174,6 @@ def register(request):
 
     return render(request, "register.html", {"form": form})
 
-# Alias to prevent AttributeError if urls.py points to register_view
 register_view = register
 
 
@@ -219,7 +225,6 @@ def dashboard(request):
 # -----------------------------
 @login_required(login_url="login")
 def chatbot(request):
-    # 1. Handle "New Chat" request
     if request.GET.get('new') == 'true':
         latest_chat = ChatMessage.objects.filter(user=request.user).order_by('id').last()
         request.session['cleared_up_to_id'] = latest_chat.id if latest_chat else 0
@@ -229,14 +234,12 @@ def chatbot(request):
             
         return redirect('chatbot')
 
-    # 2. Check if a specific chat ID is requested via URL query string or session
     chat_id = request.GET.get('chat_id')
     if chat_id:
         request.session['active_chat_id'] = chat_id
 
     active_chat_id = request.session.get('active_chat_id')
 
-    # 3. Load chat history
     if active_chat_id:
         chat_messages = ChatMessage.objects.filter(
             user=request.user, 
@@ -251,12 +254,11 @@ def chatbot(request):
 
     return render(request, 'chatbot.html', {'chat_messages': chat_messages})
 
-# Alias to support url pattern compatibility
 chatbot_view = chatbot
 
 
 # -----------------------------
-# OpenRouter / Groq Chat API (With Smart Weather Extraction)
+# OpenRouter / Groq Chat API
 # -----------------------------
 @login_required(login_url='login')
 def chat_api_view(request):
@@ -266,14 +268,10 @@ def chat_api_view(request):
         if not user_message:
             return JsonResponse({"error": "Message cannot be empty."}, status=400)
 
-        # -------------------------------------------------------------
-        # 🌤️ Smart Weather Intercept
-        # -------------------------------------------------------------
         user_message_lower = user_message.lower()
         weather_keywords = ["weather", "temperature", "climate", "forecast", "rain"]
 
         if any(kw in user_message_lower for kw in weather_keywords):
-            # Strip out common question/filler words to isolate the city name
             filler_pattern = r'\b(what|is|the|how|tell|me|about|current|live|today|now|right|climate|weather|temperature|forecast|rain|in|of|for|at|like|please|show)\b'
             cleaned_city = re.sub(filler_pattern, ' ', user_message_lower)
             cleaned_city = re.sub(r'[^\w\s]', '', cleaned_city).strip()
@@ -293,16 +291,12 @@ def chat_api_view(request):
                     "created_at": chat_obj.created_at.strftime("%b %d, %Y - %I:%M %p"),
                 })
 
-        # -------------------------------------------------------------
-        # 🤖 AI Chat Request Processing
-        # -------------------------------------------------------------
         openrouter_key = os.getenv("OPENROUTER_API_KEY")
         groq_key = os.getenv("GROQ_API_KEY")
 
         if not openrouter_key and not groq_key:
-            return JsonResponse({"error": "No API keys found in API.env."}, status=500)
+            return JsonResponse({"error": "No API keys found in environment variables."}, status=500)
 
-        # Force exact Indian Standard Time (IST)
         try:
             ist_tz = zoneinfo.ZoneInfo("Asia/Kolkata")
             now_ist = datetime.now(ist_tz)
@@ -313,7 +307,6 @@ def chat_api_view(request):
 
         past_chats = ChatMessage.objects.filter(user=request.user).order_by('created_at')
         
-        # Explicit system prompt instruction
         messages_payload = [
             {
                 "role": "system", 
@@ -335,7 +328,6 @@ def chat_api_view(request):
 
         ai_response = None
 
-        # Tier 1: Try OpenRouter Free Models
         if openrouter_key:
             openrouter_models = [
                 "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
@@ -358,7 +350,6 @@ def chat_api_view(request):
                     print(f"⚠️ OpenRouter model {model_name} failed: {err}")
                     continue
 
-        # Tier 2: Fallback to Groq API
         if not ai_response and groq_key:
             print("🔄 Falling back to Groq API...")
             try:
@@ -377,7 +368,6 @@ def chat_api_view(request):
                 "error": "All AI models are currently rate-limited. Please wait a moment and try again."
             }, status=429)
 
-        # Save response to database
         chat_obj = ChatMessage.objects.create(
             user=request.user,
             message=user_message,
@@ -571,7 +561,7 @@ def images_view(request):
 
             response = requests.get(cloud_url, timeout=30)
             if response.status_code == 200:
-                media_dir = Path(settings.BASE_DIR) / 'media' / 'generated_images'
+                media_dir = Path(settings.MEDIA_ROOT) / 'generated_images'
                 media_dir.mkdir(parents=True, exist_ok=True)
 
                 filename = f"{uuid.uuid4()}.png"
@@ -594,7 +584,7 @@ def images_view(request):
 
 
 # -----------------------------
-# Cloud Video Generator (With Auto-Retry & Anti-429 Logic)
+# Cloud Video Generator
 # -----------------------------
 @login_required(login_url="login")
 def videos_view(request):
@@ -603,9 +593,11 @@ def videos_view(request):
         if not raw_prompt:
             return JsonResponse({"error": "Prompt cannot be empty."}, status=400)
 
+        if Image is None or np is None or imageio is None:
+            return JsonResponse({"error": "Image/Video processing libraries are not installed on this environment."}, status=500)
+
         try:
             enhanced_prompt = enhance_prompt_with_nemotron(raw_prompt, media_type="video")
-            print(f"🎬 Enhanced Video Prompt: {enhanced_prompt}")
 
             encoded_prompt = urllib.parse.quote(enhanced_prompt)
             headers = {
@@ -620,21 +612,18 @@ def videos_view(request):
                 random_seed = random.randint(1000, 99999)
                 cloud_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=768&height=512&model=flux&nologo=true&seed={random_seed}"
 
-                print(f"⏳ Attempt {attempt}/{max_retries}: Fetching scene from cloud...")
                 res = requests.get(cloud_url, headers=headers, timeout=45)
 
                 if res.status_code == 200 and len(res.content) > 0:
                     break
 
                 if res.status_code == 429:
-                    print(f"⚠️ Status 429 (Rate Limited). Waiting 2s before retry...")
                     time.sleep(2)
                 else:
-                    print(f"⚠️ Cloud returned status {res.status_code}. Retrying in 1s...")
                     time.sleep(1)
 
             if res and res.status_code == 200 and len(res.content) > 0:
-                media_dir = Path(settings.BASE_DIR) / 'media' / 'generated_videos'
+                media_dir = Path(settings.MEDIA_ROOT) / 'generated_videos'
                 media_dir.mkdir(parents=True, exist_ok=True)
 
                 base_img = Image.open(BytesIO(res.content)).convert("RGB")
@@ -661,23 +650,19 @@ def videos_view(request):
                     pixelformat='yuv420p'
                 )
 
-                print(f"✅ Video generated successfully: {file_path}")
                 return JsonResponse({"status": "success", "video_url": f"/media/generated_videos/{filename}"})
 
             else:
                 status_code = res.status_code if res else "Unknown"
-                print(f"❌ Cloud HTTP Error after retries: Status {status_code}")
                 return JsonResponse({
                     "status": "error", 
                     "message": "Cloud generator is temporarily busy. Please click generate once more."
                 }, status=429 if status_code == 429 else 400)
 
         except requests.exceptions.Timeout:
-            print("❌ Cloud Request Timed Out")
             return JsonResponse({"status": "error", "message": "Connection timed out. Please try again."}, status=504)
 
         except Exception as e:
-            print(f"❌ Video Generation Exception: {str(e)}")
             return JsonResponse({"status": "error", "message": str(e)}, status=400)
 
     return render(request, 'videos.html')
