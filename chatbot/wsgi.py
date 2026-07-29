@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 from django.core.wsgi import get_wsgi_application
 
+# Add project root to Python path so Vercel can resolve 'chatbot' and 'APICHAT'
 BASE_DIR = Path(__file__).resolve().parent.parent
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
@@ -10,4 +11,6 @@ if str(BASE_DIR) not in sys.path:
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'chatbot.settings')
 
 application = get_wsgi_application()
+
+# Vercel looks for an object named 'app'
 app = application
