@@ -9,4 +9,5 @@ pillow
 numpy
 imageio
 pydantic==2.13.4
-gunicorn==26.0.0gunicorn
+gunicorn==26.0.0
+gunicorn
