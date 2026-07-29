@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+{% block content %}
+    <h1>Welcome to the AI Chatbot</h1>
+    <p>
+        <a href="{% url 'login' %}">Login</a> or
+        <a href="{% url 'register' %}">Register</a>
+    </p>
+    <p><a href="{% url 'chatbot' %}">Open Chatbot</a></p>
+{% endblock %}

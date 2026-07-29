@@ -1,0 +1,401 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat | AI ChatBot</title>
+    <link rel="stylesheet" href="{% static 'css/chatbot.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+    
+    <!-- Marked.js for parsing AI Markdown into clean points, lists, and HTML -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+
+<body>
+
+<div class="chat-page">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sidebar">
+
+        <div class="logo">
+            <img src="{% static 'images/logo.jpg' %}" alt="AI Agent Logo" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;">
+            <h2>AI Agent</h2>
+        </div>
+
+        <ul class="menu">
+            <li>
+                <a href="{% url 'dashboard' %}">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+
+            <!-- Chatbot section with always-open sub-menu -->
+            <li class="dropdown-parent active">
+                <a href="{% url 'chatbot' %}">
+                    <i class="fa-solid fa-comments"></i>
+                    <span>Chatbot</span>
+                </a>
+                
+                <ul class="submenu open" style="max-height: none; opacity: 1; padding-left: 15px;">
+                    <li>
+                        <!-- New Chat: Add a link to clear the session or start a new thread -->
+                        <a href="{% url 'chatbot' %}?new=true" class="active-sub">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                            <span>New chat</span>
+                        </a>
+                    </li>
+                    <li>
+                        <!-- Search chats: Routes to History page -->
+                        <a href="{% url 'history' %}">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <span>Search chats</span>
+                        </a>
+                    </li>
+                    <li>
+                        <!-- Images Section -->
+                        <a href="{% url 'images' %}">
+                            <i class="fa-solid fa-image"></i>
+                            <span>Images</span>
+                        </a>
+                    </li>
+                    <li>
+                        <!-- Videos Section -->
+                        <a href="{% url 'videos' %}">
+                            <i class="fa-solid fa-video"></i>
+                            <span>Videos</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <li>
+                <a href="{% url 'history' %}">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>History</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'profile' %}">
+                    <i class="fa-solid fa-user"></i>
+                    <span>Profile</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'logout' %}">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+        </ul>
+
+    </aside>
+
+    <!-- ================= Chat Main ================= -->
+    <main class="chat-main" style="display: flex; flex-direction: column; background: #0f172a; min-height: 100vh;">
+
+        <!-- Elite Header -->
+        <header class="chat-header elite-header">
+            <div class="header-main-content">
+                <div class="icon-glow-container">
+                    <div class="icon-wrapper">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                </div>
+                <div class="title-meta-group">
+                    <div class="title-row">
+                        <h2 class="title-text">AI Assistant</h2>
+                        <div class="live-pill">
+                            <span class="pulse-dot"></span>
+                            <span>Active</span>
+                        </div>
+                    </div>
+                    <p class="subtitle-text">Ask me anything — I remember this conversation in your history.</p>
+                </div>
+            </div>
+            <div class="header-laser-line"></div>
+        </header>
+
+        <!-- Chat Window -->
+        <section class="chat-window" id="chatWindow" style="flex: 1; overflow-y: auto; padding: 20px;">
+
+            {% for chat in chat_messages %}
+                <div class="message user-message">
+                    <div class="bubble">{{ chat.message }}</div>
+                </div>
+
+                <div class="message bot-message">
+                    <div class="bubble">
+                        <div class="markdown-content">{{ chat.response }}</div>
+                        <div style="margin-top: 12px; text-align: right;">
+                            <form method="POST" action="{% url 'toggle_save_chat' chat.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" style="background:none; border:none; color:{% if chat.is_saved %}#60a5fa{% else %}#94a3b8{% endif %}; cursor:pointer; font-size: 13px;">
+                                    <i class="fa-solid fa-bookmark"></i> {% if chat.is_saved %}Saved{% else %}Save Chat{% endif %}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-state" style="text-align: center; color: #94a3b8; margin-top: 50px;">
+                    <i class="fa-solid fa-comments" style="font-size: 40px; margin-bottom: 15px; color: #4f46e5;"></i>
+                    <p>No messages yet. Start a new conversation below.</p>
+                </div>
+            {% endfor %}
+
+        </section>
+
+        <!-- Chat Input Form -->
+        <form id="chatForm" class="chat-input-bar" style="width: 100%; padding: 20px; background: rgba(15, 23, 42, 0.9); box-sizing: border-box; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+            {% csrf_token %}
+            <div style="display: flex; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto; gap: 12px; background: rgba(30, 41, 59, 0.8); padding: 8px 12px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); box-sizing: border-box;">
+                
+                <input 
+                    type="text" 
+                    id="messageInput" 
+                    name="message" 
+                    placeholder="Type your message..." 
+                    autocomplete="off" 
+                    required
+                    style="flex: 1; min-width: 0; background: transparent; border: none; color: white; padding: 12px; outline: none; font-size: 15px;">
+                
+                <button type="submit" id="sendBtn" style="background: linear-gradient(135deg, #6366f1, #0ea5e9); border: none; color: white; width: 48px; height: 48px; border-radius: 12px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); transition: transform 0.2s;">
+                    <i class="fa-solid fa-paper-plane" style="font-size: 16px; transform: translateX(-1px) translateY(1px);"></i>
+                </button>
+                
+            </div>
+        </form>
+
+    </main>
+
+</div>
+
+<!-- Auto-scroll chat window to bottom on reload -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const chatWindow = document.getElementById("chatWindow");
+        if (chatWindow) {
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    });
+</script>
+
+<script src="{% static 'js/chatbot.js' %}"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Parse all pre-existing bot messages into structured HTML on page load
+        document.querySelectorAll(".markdown-content").forEach(function (element) {
+            element.innerHTML = marked.parse(element.innerText);
+        });
+    });
+</script>
+
+<style>
+    /* Message Container Structure & Animation */
+    .message {
+        display: flex;
+        margin-bottom: 20px;
+        animation: fadeInMsg 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fadeInMsg {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* User Message Bubble */
+    .user-message {
+        justify-content: flex-end;
+    }
+
+    .user-message .bubble {
+        background: linear-gradient(135deg, #6366f1 0%, #0284c7 100%);
+        color: #ffffff;
+        border-radius: 20px 20px 4px 20px;
+        padding: 14px 22px;
+        max-width: 75%;
+        font-size: 15px;
+        line-height: 1.5;
+        box-shadow: 0 8px 25px -5px rgba(99, 102, 241, 0.3);
+        word-wrap: break-word;
+    }
+
+    /* Ultra-Polished Bot Message Bubble */
+    .bot-message {
+        justify-content: flex-start;
+    }
+
+    .bot-message .bubble {
+        position: relative;
+        overflow: hidden; /* Fixes blue line sticking out past rounded corners */
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        color: #f1f5f9;
+        border-radius: 20px 20px 20px 6px;
+        padding: 18px 24px;
+        max-width: 80%;
+        font-size: 15px;
+        line-height: 1.65;
+        letter-spacing: 0.2px;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.35), 0 0 20px rgba(99, 102, 241, 0.05);
+        word-wrap: break-word;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .bot-message .bubble:hover {
+        border-color: rgba(99, 102, 241, 0.4);
+        box-shadow: 0 12px 35px -5px rgba(0, 0, 0, 0.45), 0 0 25px rgba(99, 102, 241, 0.1);
+    }
+
+    /* Left Neon Line Accent */
+    .bot-message .bubble::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 4px;
+        background: linear-gradient(180deg, #6366f1, #38bdf8);
+        box-shadow: 0 0 8px #6366f1;
+    }
+
+    /* Bot Message Markdown Formatting & Point Spacing */
+    .bot-message .bubble p {
+        margin-top: 0;
+        margin-bottom: 12px;
+    }
+
+    .bot-message .bubble p:last-child {
+        margin-bottom: 0;
+    }
+
+    .bot-message .bubble h1,
+    .bot-message .bubble h2,
+    .bot-message .bubble h3,
+    .bot-message .bubble h4 {
+        color: #60a5fa;
+        margin-top: 16px;
+        margin-bottom: 8px;
+        font-weight: 700;
+    }
+
+    .bot-message .bubble ul, 
+    .bot-message .bubble ol {
+        margin-top: 6px;
+        margin-bottom: 14px;
+        padding-left: 22px;
+    }
+
+    .bot-message .bubble li {
+        margin-bottom: 6px;
+    }
+
+    .bot-message .bubble code {
+        background: rgba(15, 23, 42, 0.8);
+        color: #38bdf8;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 13.5px;
+    }
+
+    .bot-message .bubble pre {
+        background: #090d16;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 12px;
+        overflow-x: auto;
+        margin: 12px 0;
+    }
+
+    .bot-message .bubble pre code {
+        background: transparent;
+        padding: 0;
+        color: #e2e8f0;
+    }
+
+    .bot-message .bubble table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: 14px;
+    }
+
+    .bot-message .bubble th, 
+    .bot-message .bubble td {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 8px 12px;
+        text-align: left;
+    }
+
+    .bot-message .bubble th {
+        background: rgba(99, 102, 241, 0.15);
+        color: #818cf8;
+    }
+
+    /* Interactive Save Button Styling */
+    .bot-message .bubble button {
+        transition: all 0.2s ease !important;
+        padding: 5px 12px !important;
+        border-radius: 8px !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+
+    .bot-message .bubble button:hover {
+        background: rgba(99, 102, 241, 0.15) !important;
+        border-color: rgba(99, 102, 241, 0.3) !important;
+        color: #818cf8 !important;
+        transform: translateY(-1px);
+    }
+
+    /* Elite Header Styling */
+    .elite-header {
+        position: relative;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.7) 100%);
+        backdrop-filter: blur(30px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 28px 36px;
+        overflow: hidden;
+    }
+    .header-main-content { display: flex; align-items: center; gap: 20px; }
+    .icon-wrapper {
+        display: flex; align-items: center; justify-content: center; width: 58px; height: 58px;
+        border-radius: 18px; background: linear-gradient(135deg, #6366f1 0%, #0ea5e9 100%);
+        box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.5); border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .icon-wrapper i { color: #ffffff; font-size: 26px; }
+    .title-meta-group { display: flex; flex-direction: column; gap: 6px; }
+    .title-row { display: flex; align-items: center; gap: 14px; }
+    .title-text {
+        background: linear-gradient(135deg, #ffffff 20%, #cbd5e1 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        font-weight: 800; font-size: 26px; margin: 0;
+    }
+    .live-pill {
+        display: inline-flex; align-items: center; gap: 6px; background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.25); padding: 3px 10px; border-radius: 20px;
+        font-size: 11px; font-weight: 600; color: #4ade80;
+    }
+    .pulse-dot { width: 6px; height: 6px; background-color: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; }
+    .subtitle-text { color: #94a3b8; font-size: 14px; margin: 0; }
+    .header-laser-line {
+        position: absolute; bottom: 0; left: 0; width: 100%; height: 2px;
+        background: linear-gradient(90deg, transparent, #6366f1, #38bdf8, #818cf8, transparent);
+    }
+</style>
+
+</body>
+</html>

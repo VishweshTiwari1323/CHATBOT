@@ -1,0 +1,765 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Dashboard</title>
+
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+
+    <!-- Stylesheet Overrides & Refined Utilities -->
+    <style>
+        .profile-card::before,
+        .profile-card::after,
+        .custom-user-avatar::before,
+        .custom-user-avatar::after {
+            display: none !important;
+            content: none !important;
+            background: none !important;
+            mask-image: none !important;
+            -webkit-mask-image: none !important;
+        }
+
+        .custom-user-avatar {
+            width: 100px !important;
+            height: 100px !important;
+            min-width: 100px !important;
+            min-height: 100px !important;
+            border-radius: 50% !important;
+            overflow: hidden !important;
+            background-color: #3b82f6 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            color: #ffffff !important;
+            font-size: 36px !important;
+            font-weight: 700 !important;
+            position: relative !important;
+            clip-path: circle(50% at 50% 50%) !important;
+            -webkit-clip-path: circle(50% at 50% 50%) !important;
+            mask-image: none !important;
+            -webkit-mask-image: none !important;
+            border: none !important;
+            outline: none !important;
+        }
+
+        .custom-user-avatar img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            border-radius: 50% !important;
+            display: block !important;
+            border: none !important;
+            outline: none !important;
+            clip-path: circle(50% at 50% 50%) !important;
+            -webkit-clip-path: circle(50% at 50% 50%) !important;
+            mask-image: none !important;
+            -webkit-mask-image: none !important;
+        }
+
+        /* Profile Card Hover & Link Style */
+        .profile-card-link {
+            text-decoration: none !important;
+            color: inherit !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+            transition: transform 0.2s ease, opacity 0.2s ease !important;
+            cursor: pointer !important;
+        }
+
+        .profile-card-link:hover {
+            transform: translateY(-2px) !important;
+            opacity: 0.9 !important;
+        }
+
+        /* Notification Dropdown Styling */
+        .notification-container {
+            position: relative;
+        }
+
+        .notification {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 9px;
+            height: 9px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            border: 2px solid #0f172a;
+        }
+
+        .notification-dropdown {
+            display: none;
+            position: absolute;
+            top: 48px;
+            right: 0;
+            width: 320px;
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .notification-dropdown.active {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .notif-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .notif-header h4 {
+            margin: 0;
+            font-size: 14px;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .notif-mark-read {
+            font-size: 11px;
+            color: #60a5fa;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .notif-mark-read:hover {
+            color: #93c5fd;
+        }
+
+        .notif-list {
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .notif-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.2s;
+        }
+
+        .notif-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .notif-item.unread {
+            background: rgba(59, 130, 246, 0.08);
+        }
+
+        .notif-icon {
+            font-size: 16px;
+            margin-top: 2px;
+        }
+
+        .notif-icon.success { color: #10b981; }
+        .notif-icon.info { color: #3b82f6; }
+        .notif-icon.feature { color: #a855f7; }
+
+        .notif-content p {
+            margin: 0;
+            font-size: 12px;
+            color: #d1d5db;
+            line-height: 1.4;
+        }
+
+        .notif-time {
+            font-size: 10px;
+            color: #9ca3af;
+            display: block;
+            margin-top: 4px;
+        }
+
+        /* Clean utility classes */
+        .sidebar-logo-img {
+            width: 60px;
+            height: 60px;
+            overflow: hidden;
+            border-radius: 50%;
+        }
+
+        .hero-robot-img {
+            width: 200px;
+            height: 200px;
+            overflow: hidden;
+            border-radius: 50%;
+        }
+
+        .llm-card {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 25px 30px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        .llm-card-intro {
+            font-size: 15px;
+            line-height: 1.7;
+            color: #d1d5db;
+            margin-bottom: 25px;
+        }
+
+        .llm-card-title {
+            color: #ffffff;
+            margin-bottom: 18px;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .llm-capability-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+
+        .llm-capability-item {
+            margin-bottom: 16px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .llm-capability-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .llm-capability-icon {
+            color: #6366f1;
+            font-size: 18px;
+            margin-right: 15px;
+            margin-top: 3px;
+        }
+
+        .llm-capability-title {
+            color: #f3f4f6;
+            font-size: 15px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .llm-capability-desc {
+            color: #9ca3af;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .workspace-banner-wrapper {
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+
+        .workspace-banner-inner {
+            background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%);
+            padding: 35px 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.25);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .workspace-banner-glow {
+            position: absolute;
+            top: -30px;
+            right: -30px;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            filter: blur(30px);
+        }
+
+        .workspace-banner-heading {
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 0;
+            margin-bottom: 12px;
+        }
+
+        .workspace-banner-text {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 15px;
+            line-height: 1.6;
+            margin: 0;
+            max-width: 95%;
+        }
+
+        .site-footer {
+            text-align: center;
+            padding-bottom: 30px;
+            color: #9ca3af;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+
+        .heart-icon {
+            color: #ef4444;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- ================= Animated Background ================= -->
+<div class="background">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+
+<!-- ================= Dashboard ================= -->
+<div class="dashboard">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="{% static 'images/logo.jpg' %}" alt="AI Agent Logo" class="sidebar-logo-img">
+            <h2>AI Agent</h2>
+        </div>
+
+        <ul class="menu">
+            <li class="active">
+                <a href="{% url 'dashboard' %}">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'chatbot' %}">
+                    <i class="fa-solid fa-comments"></i>
+                    <span>Chatbot</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'history' %}">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>History</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'profile' %}">
+                    <i class="fa-solid fa-user"></i>
+                    <span>Profile</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'logout' %}">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- ================= Main Content ================= -->
+    <main class="main">
+
+        <!-- ================= Navbar ================= -->
+        <header class="navbar">
+
+            <div class="heading">
+                <h1 id="greeting" data-username="{{ request.user.username }}">
+                    Welcome Back, {{ request.user.username }}
+                </h1>
+                <p>Your AI workspace is ready.</p>
+            </div>
+
+            <div class="user-box">
+                <!-- Functional Notifications Dropdown -->
+                <div class="notification-container">
+                    <button class="notification" id="notifBtn" aria-label="Notifications">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notification-badge" id="notifBadge"></span>
+                    </button>
+
+                    <div class="notification-dropdown" id="notifDropdown">
+                        <div class="notif-header">
+                            <h4>Notifications</h4>
+                            <span class="notif-mark-read" id="markReadBtn">Mark all as read</span>
+                        </div>
+                        <div class="notif-list">
+                            <div class="notif-item unread">
+                                <i class="fa-solid fa-circle-check notif-icon success"></i>
+                                <div class="notif-content">
+                                    <p><strong>AI Engines Active:</strong> OpenRouter & Groq models are running normally.</p>
+                                    <span class="notif-time">Just now</span>
+                                </div>
+                            </div>
+                            <div class="notif-item unread">
+                                <i class="fa-solid fa-clock notif-icon info"></i>
+                                <div class="notif-content">
+                                    <p><strong>IST Time Sync:</strong> Chatbot responses are now synchronized with IST local time.</p>
+                                    <span class="notif-time">1 hour ago</span>
+                                </div>
+                            </div>
+                            <div class="notif-item">
+                                <i class="fa-solid fa-wand-magic-sparkles notif-icon feature"></i>
+                                <div class="notif-content">
+                                    <p><strong>Media Generator:</strong> Image and MP4 video generation pipelines are ready.</p>
+                                    <span class="notif-time">Today</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clickable Profile Card Redirecting to Profile Page -->
+                <a href="{% url 'profile' %}" class="profile-card profile-card-link" title="View Profile">
+                    <div class="custom-user-avatar">
+                        {% if request.user.profile.image %}
+                            <img src="{{ request.user.profile.image.url }}" alt="{{ request.user.username }}">
+                        {% else %}
+                            <span>{{ request.user.username|first|upper }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <h4>{{ request.user.username }}</h4>
+                        <span>AI Explorer</span>
+                    </div>
+                </a>
+            </div>
+
+        </header>
+
+        <!-- ================= Hero ================= -->
+        <section class="hero">
+            <div class="hero-left">
+                <h2>Your Personal AI Assistant</h2>
+                <p>
+                    Generate code, solve problems, summarize documents,
+                    debug projects, answer questions and build amazing
+                    applications using your AI Agent.
+                </p>
+
+                <div class="hero-buttons">
+                    <a href="{% url 'chatbot' %}" class="primary-btn">
+                        <i class="fa-solid fa-robot"></i>
+                        Start Chat
+                    </a>
+
+                    <a href="{% url 'history' %}" class="secondary-btn">
+                        <i class="fa-solid fa-clock"></i>
+                        Chat History
+                    </a>
+                </div>
+            </div>
+
+            <div class="hero-right">
+                <div class="robot-circle">
+                    <img src="{% static 'images/todo.jpg' %}" alt="AI Agent Logo" class="hero-robot-img">
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= Statistics ================= -->
+        <section class="stats">
+            <div class="card">
+                <i class="fa-solid fa-comments"></i>
+                <h3 id="chatCount">{{ chat_count }}</h3>
+                <p>Total Chats</p>
+            </div>
+
+            <div class="card">
+                <i class="fa-solid fa-brain"></i>
+                <h3 id="responseCount">{{ response_count }}</h3>
+                <p>AI Responses</p>
+            </div>
+
+            <div class="card">
+                <i class="fa-solid fa-bookmark"></i>
+                <h3 id="savedCount">{{ saved_count }}</h3>
+                <p>Saved Chats</p>
+            </div>
+
+            <div class="card">
+                <i class="fa-solid fa-calendar-day"></i>
+                <h3 id="todayCount">{{ today_count }}</h3>
+                <p>Today's Chats</p>
+            </div>
+        </section>
+
+        <!-- ================= Quick Actions ================= -->
+        <section class="quick-actions">
+            <h2>⚡ Quick Actions</h2>
+
+            <div class="action-grid">
+                <a href="{% url 'chatbot' %}" class="action-card">
+                    <i class="fa-solid fa-comments"></i>
+                    <h3>Start Chat</h3>
+                    <p>Talk with your AI Assistant.</p>
+                </a>
+
+                <a href="{% url 'history' %}" class="action-card">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <h3>History</h3>
+                    <p>View previous conversations.</p>
+                </a>
+
+                <a href="{% url 'profile' %}" class="action-card">
+                    <i class="fa-solid fa-user"></i>
+                    <h3>Profile</h3>
+                    <p>Edit your profile information.</p>
+                </a>
+
+                <a href="{% url 'logout' %}" class="action-card">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <h3>Logout</h3>
+                    <p>Securely sign out.</p>
+                </a>
+            </div>
+        </section>
+
+        <!-- ================= Recent Conversations ================= -->
+        <section class="recent">
+            <div class="section-title">
+                <h2>📜 Recent Conversations</h2>
+                <a href="{% url 'history' %}">View All</a>
+            </div>
+
+            <div class="recent-list" id="recent-chats-list">
+                {% for chat in recent_chats %}
+                    <a href="{% url 'history' %}" class="recent-card">
+                        <i class="fa-solid fa-comment-dots"></i>
+                        <div>
+                            <h4>{{ chat.message|truncatechars:40 }}</h4>
+                            <p>{{ chat.created_at|timesince }} ago</p>
+                        </div>
+                    </a>
+                {% empty %}
+                    <div class="recent-card empty">
+                        <i class="fa-solid fa-comment-slash"></i>
+                        <div>
+                            <h4>No conversations yet</h4>
+                            <p>Start chatting to see your history here.</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- ================= AI Features ================= -->
+        <section class="suggestions">
+            <h2>🤖 What Your AI Can Do</h2>
+
+            <div class="suggestion-grid">
+                <div class="suggestion-card">
+                    <i class="fa-solid fa-code"></i>
+                    <h4>Generate Code</h4>
+                </div>
+
+                <div class="suggestion-card">
+                    <i class="fa-solid fa-bug"></i>
+                    <h4>Debug Programs</h4>
+                </div>
+
+                <div class="suggestion-card">
+                    <i class="fa-solid fa-book"></i>
+                    <h4>Explain Concepts</h4>
+                </div>
+
+                <div class="suggestion-card">
+                    <i class="fa-solid fa-file-lines"></i>
+                    <h4>Summarize Notes</h4>
+                </div>
+
+                <div class="suggestion-card">
+                    <i class="fa-solid fa-language"></i>
+                    <h4>Translate Text</h4>
+                </div>
+
+                <div class="suggestion-card">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    <h4>Project Ideas</h4>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= LLM Module Info ================= -->
+        <section class="llm-module-info">
+            <div class="section-title">
+                <h2>🧠 Core AI Engine (API Module)</h2>
+            </div>
+
+            <div class="llm-card">
+                <p class="llm-card-intro">
+                    This platform is powered by a state-of-the-art <strong>Large Language Model (LLM)</strong>, acting as the central cognitive brain of your AI Agent. It leverages advanced natural language processing (NLP) to deeply understand context, interpret complex logical instructions, and generate highly accurate, human-like responses in real-time.
+                </p>
+
+                <h4 class="llm-card-title">
+                    ✨ Module Capabilities
+                </h4>
+
+                <ul class="llm-capability-list">
+                    <li class="llm-capability-item">
+                        <i class="fa-solid fa-microchip llm-capability-icon"></i>
+                        <div>
+                            <strong class="llm-capability-title">Contextual Memory</strong>
+                            <span class="llm-capability-desc">Retains multi-turn conversational history to provide seamless, logical, and highly relevant follow-up interactions.</span>
+                        </div>
+                    </li>
+
+                    <li class="llm-capability-item">
+                        <i class="fa-solid fa-bolt llm-capability-icon"></i>
+                        <div>
+                            <strong class="llm-capability-title">Dynamic Generation</strong>
+                            <span class="llm-capability-desc">Expertly handles algorithmic code generation, deep-dive software debugging, and complex data summarization.</span>
+                        </div>
+                    </li>
+
+                    <li class="llm-capability-item">
+                        <i class="fa-solid fa-shield-halved llm-capability-icon"></i>
+                        <div>
+                            <strong class="llm-capability-title">Secure Processing</strong>
+                            <span class="llm-capability-desc">Processes your prompts through secure pipelines, ensuring your data and proprietary queries remain strictly confidential.</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- ================= Premium Banner ================= -->
+        <section class="tip-card workspace-banner-wrapper">
+            <div class="workspace-banner-inner">
+                <div class="workspace-banner-glow"></div>
+
+                <h2 class="workspace-banner-heading">
+                    <span>💡</span> Welcome to Your AI Workspace
+                </h2>
+
+                <p class="workspace-banner-text">
+                    Use your AI Assistant to generate code, solve programming
+                    problems, summarize documents, answer questions,
+                    build projects, and learn new technologies faster.
+                </p>
+            </div>
+        </section>
+
+        <!-- ================= Footer ================= -->
+        <footer class="site-footer">
+            <p>
+                © 2026 AI ChatBot Dashboard | Built with Django & <span class="heart-icon">❤️</span>
+            </p>
+        </footer>
+
+    </main>
+
+</div>
+
+<!-- Interactive Notification Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const notifBtn = document.getElementById("notifBtn");
+        const notifDropdown = document.getElementById("notifDropdown");
+        const markReadBtn = document.getElementById("markReadBtn");
+        const notifBadge = document.getElementById("notifBadge");
+
+        if (notifBtn && notifDropdown) {
+            // Toggle dropdown visibility
+            notifBtn.addEventListener("click", function (e) {
+                e.stopPropagation();
+                notifDropdown.classList.toggle("active");
+            });
+
+            // Close dropdown on outside click
+            document.addEventListener("click", function (e) {
+                if (!notifDropdown.contains(e.target) && !notifBtn.contains(e.target)) {
+                    notifDropdown.classList.remove("active");
+                }
+            });
+
+            // Mark all notifications as read
+            if (markReadBtn) {
+                markReadBtn.addEventListener("click", function () {
+                    const unreadItems = document.querySelectorAll(".notif-item.unread");
+                    unreadItems.forEach(item => item.classList.remove("unread"));
+                    if (notifBadge) notifBadge.style.display = "none";
+                });
+            }
+        }
+    });
+</script>
+
+<!-- Dynamic Time-of-Day Greeting Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const greetingElement = document.getElementById("greeting");
+        if (greetingElement) {
+            const username = greetingElement.getAttribute("data-username") || "";
+            const currentHour = new Date().getHours();
+            let timeGreeting = "Welcome back";
+
+            if (currentHour >= 5 && currentHour < 12) {
+                timeGreeting = "Good morning";
+            } else if (currentHour >= 12 && currentHour < 18) {
+                timeGreeting = "Good afternoon";
+            } else {
+                timeGreeting = "Good evening";
+            }
+
+            greetingElement.textContent = `${timeGreeting}, ${username}`;
+        }
+    });
+</script>
+
+<!-- Auto-refresh script for recent conversations -->
+<script>
+    function refreshRecentChats() {
+        fetch(window.location.href)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const freshChats = doc.getElementById('recent-chats-list');
+                if (freshChats) {
+                    document.getElementById('recent-chats-list').innerHTML = freshChats.innerHTML;
+                }
+            })
+            .catch(error => console.error('Error refreshing chats:', error));
+    }
+
+    // Runs every 60 seconds
+    setInterval(refreshRecentChats, 30000);
+</script>
+
+<script src="{% static 'js/dashboard.js' %}"></script>
+
+</body>
+</html>

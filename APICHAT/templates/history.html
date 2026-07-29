@@ -1,0 +1,167 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History | AI ChatBot</title>
+    <link rel="stylesheet" href="{% static 'css/history.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="{% static 'images/logo.jpg' %}" alt="AI Agent Logo" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;">
+            <h2>AI Agent</h2>
+        </div>
+
+        <ul class="menu">
+            <li>
+                <a href="{% url 'dashboard' %}">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'chatbot' %}">
+                    <i class="fa-solid fa-comments"></i>
+                    <span>Chatbot</span>
+                </a>
+            </li>
+            <li class="active">
+                <a href="{% url 'history' %}">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>History</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'profile' %}">
+                    <i class="fa-solid fa-user"></i>
+                    <span>Profile</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'logout' %}">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- ================= Main ================= -->
+    <main class="main">
+
+        <header class="navbar">
+            <div class="heading">
+                <h1>Chat History</h1>
+                <p>All your past conversations, saved and searchable.</p>
+            </div>
+        </header>
+
+        <!-- ================= Search Bar Section ================= -->
+        <div class="history-search-container" style="margin: 25px 0;">
+            <form method="GET" action="{% url 'history' %}" style="display: flex; gap: 12px; max-width: 700px;">
+                
+                <!-- Input Field with Icon -->
+                <div style="position: relative; flex: 1;">
+                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                    <input 
+                        type="text" 
+                        name="q" 
+                        placeholder="Search messages or AI responses..." 
+                        value="{{ request.GET.q }}"
+                        style="width: 100%; box-sizing: border-box; background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); color: white; padding: 12px 16px 12px 45px; border-radius: 12px; font-size: 15px; outline: none; transition: 0.3s;"
+                        onfocus="this.style.borderColor='#6366f1'; this.style.boxShadow='0 0 0 3px rgba(99, 102, 241, 0.2)';"
+                        onblur="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.boxShadow='none';"
+                    >
+                </div>
+
+                <!-- Search Button -->
+                <button type="submit" style="background: linear-gradient(135deg, #6366f1, #0ea5e9); border: none; color: white; padding: 0 24px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;">
+                    Search
+                </button>
+
+                <!-- Clear Button (Only shows if a search is active) -->
+                {% if request.GET.q %}
+                    <a href="{% url 'history' %}" style="display: flex; align-items: center; justify-content: center; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; padding: 0 16px; border-radius: 12px; text-decoration: none; font-weight: 500; transition: 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'">
+                        Clear
+                    </a>
+                {% endif %}
+
+            </form>
+        </div>
+        <!-- ================= End Search Bar ================= -->
+
+       
+
+        <section class="history-list">
+
+{% for chat in chats %}
+                <div class="history-card" style="transition: 0.3s; position: relative;">
+                    
+                    <div class="history-top">
+                        <span class="history-date">
+                            <i class="fa-solid fa-calendar"></i>
+                            {{ chat.created_at|date:"M d, Y - h:i A" }}
+                        </span>
+                        
+                        <div class="history-actions">
+                            
+                            <!-- NEW: Open in Chat Button -->
+                            <a href="{% url 'chatbot' %}?chat_id={{ chat.id }}" class="icon-btn" title="Open in Chat" style="text-decoration: none; color: #60a5fa; display: inline-flex; align-items: center; justify-content: center;">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+
+                            <form method="POST" action="{% url 'toggle_save_chat' chat.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="icon-btn" title="Save / Unsave">
+                                    {% if chat.is_saved %}
+                                        <i class="fa-solid fa-bookmark"></i>
+                                    {% else %}
+                                        <i class="fa-regular fa-bookmark"></i>
+                                    {% endif %}
+                                </button>
+                            </form>
+                            
+                            <form method="POST" action="{% url 'delete_chat' chat.id %}" onsubmit="return confirm('Delete this conversation?');">
+                                {% csrf_token %}
+                                <button type="submit" class="icon-btn danger" title="Delete">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- NEW: Wrapped the body in an anchor tag so clicking the text opens the chat too -->
+                    <a href="{% url 'chatbot' %}?chat_id={{ chat.id }}" style="text-decoration: none; color: inherit; display: block; outline: none;">
+                        <div class="history-body" style="padding: 10px 0; cursor: pointer;">
+                            <p class="history-message"><strong>You:</strong> {{ chat.message }}</p>
+                            <p class="history-response"><strong>AI:</strong> {{ chat.response }}</p>
+                        </div>
+                    </a>
+                    
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <p>No chat history yet. Start a conversation to see it here.</p>
+                    <a href="{% url 'chatbot' %}" class="primary-btn">
+                        <i class="fa-solid fa-robot"></i> Start Chat
+                    </a>
+                </div>
+            {% endfor %}
+
+        </section>
+    </main>
+</div>
+
+</body>
+</html>

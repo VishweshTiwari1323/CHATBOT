@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Arial, Helvetica, sans-serif;
+        }
+
+        body{
+            background:#f3f4f6;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
+        }
+
+        .chat-container{
+
+            width:800px;
+            height:600px;
+
+            background:white;
+
+            border-radius:15px;
+
+            box-shadow:0 10px 25px rgba(0,0,0,.2);
+
+            display:flex;
+            flex-direction:column;
+
+            overflow:hidden;
+
+        }
+
+        .header{
+
+            background:#4f46e5;
+
+            color:white;
+
+            padding:20px;
+
+            text-align:center;
+
+            font-size:24px;
+
+            font-weight:bold;
+
+        }
+
+        .chat-box{
+
+            flex:1;
+
+            padding:20px;
+
+            overflow-y:auto;
+
+        }
+
+        .input-area{
+
+            display:flex;
+
+            padding:15px;
+
+            border-top:1px solid #ddd;
+
+        }
+
+        input{
+
+            flex:1;
+
+            padding:12px;
+
+            border:1px solid #ccc;
+
+            border-radius:8px;
+
+            outline:none;
+
+        }
+
+        button{
+
+            margin-left:10px;
+
+            padding:12px 25px;
+
+            border:none;
+
+            border-radius:8px;
+
+            background:#4f46e5;
+
+            color:white;
+
+            cursor:pointer;
+
+        }
+
+        button:hover{
+
+            background:#3730a3;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="chat-container">
+
+    <div class="header">
+        AI Chatbot
+    </div>
+
+    <div class="chat-box" id="chat-box">
+
+        <p><b>Bot:</b> Hello 👋 How can I help you today?</p>
+
+    </div>
+
+    <div class="input-area">
+
+        <input
+        type="text"
+        id="message"
+        placeholder="Type your message...">
+
+        <button onclick="sendMessage()">
+
+            Send
+
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+
+function sendMessage(){
+
+    let input=document.getElementById("message");
+
+    let chat=document.getElementById("chat-box");
+
+    if(input.value==="") return;
+
+    chat.innerHTML += `<p><b>You:</b> ${input.value}</p>`;
+
+    input.value="";
+
+}
+
+</script>
+
+</body>
+</html>

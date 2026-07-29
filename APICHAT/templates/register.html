@@ -1,0 +1,92 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account | AI Chatbot</title>
+
+    <link rel="stylesheet" href="{% static 'css/register.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="background">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+
+<div class="container">
+
+    <div class="register-box">
+
+        <div class="logo">
+            <img src="{% static 'images/logo.jpg' %}" alt="AI Agent Logo" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;">
+            <h1>AI Chatbot</h1>
+        </div>
+
+        <h2>Create Your Account</h2>
+        <p class="subtitle">Join your intelligent AI assistant today.</p>
+
+        
+
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="input-group">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" name="username" placeholder="Username" required>
+            </div>
+
+            <div class="input-group">
+                <i class="fa-solid fa-envelope"></i>
+                <input type="email" name="email" placeholder="Email Address" required>
+            </div>
+
+            <div class="input-group password-group">
+                <i class="fa-solid fa-lock"></i>
+                <input id="password" type="password" name="password1" placeholder="Password" required>
+                <span class="toggle-password" onclick="togglePassword('password', this)">
+                    <i class="fa-solid fa-eye"></i>
+                </span>
+            </div>
+
+            <div class="input-group password-group">
+                <i class="fa-solid fa-lock"></i>
+                <input id="confirm_password" type="password" name="password2" placeholder="Confirm Password" required>
+                <span class="toggle-password" onclick="togglePassword('confirm_password', this)">
+                    <i class="fa-solid fa-eye"></i>
+                </span>
+            </div>
+
+            <button type="submit" class="register-btn">
+                <i class="fa-solid fa-user-plus"></i>
+                Create Account
+            </button>
+
+        </form>
+
+        <div class="bottom-text">
+            Already have an account?
+            <a href="{% url 'login' %}">
+                Login
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+<script src="{% static 'js/register.js' %}"></script>
+
+</body>
+</html>

@@ -1,0 +1,306 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Images | AI Agent</title>
+    <link rel="stylesheet" href="{% static 'css/chatbot.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+</head>
+<body>
+
+<div class="chat-page">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="{% static 'images/logo.jpg' %}" alt="AI Agent Logo" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;">
+            <h2>AI Agent</h2>
+        </div>
+        <ul class="menu">
+            <li><a href="{% url 'dashboard' %}"><i class="fa-solid fa-house"></i><span>Dashboard</span></a></li>
+            <li class="dropdown-parent active">
+                <a href="{% url 'chatbot' %}"><i class="fa-solid fa-comments"></i><span>Chatbot</span></a>
+                <ul class="submenu open" style="max-height: none; opacity: 1; padding-left: 15px;">
+                    <li><a href="{% url 'chatbot' %}?new=true"><i class="fa-solid fa-pen-to-square"></i><span>New chat</span></a></li>
+                    <li><a href="{% url 'history' %}"><i class="fa-solid fa-magnifying-glass"></i><span>Search chats</span></a></li>
+                    <li><a href="{% url 'images' %}" class="active-sub" style="color: #60a5fa;"><i class="fa-solid fa-image"></i><span>Images</span></a></li>
+                    <li><a href="{% url 'videos' %}"><i class="fa-solid fa-video"></i><span>Videos</span></a></li>
+                </ul>
+            </li>
+            <li><a href="{% url 'history' %}"><i class="fa-solid fa-clock-rotate-left"></i><span>History</span></a></li>
+            <li><a href="{% url 'profile' %}"><i class="fa-solid fa-user"></i><span>Profile</span></a></li>
+            <li><a href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a></li>
+        </ul>
+    </aside>
+
+    <!-- ================= Main Content ================= -->
+    <main class="chat-main" style="display: flex; flex-direction: column; background: #0f172a; min-height: 100vh; overflow-y: auto;">
+        
+        <!-- Premium Image Header -->
+        <header class="chat-header elite-header">
+            <div class="header-main-content">
+                <div class="icon-glow-container">
+                    <div class="icon-wrapper" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); box-shadow: 0 10px 30px -5px rgba(236, 72, 153, 0.5);">
+                        <i class="fa-solid fa-image"></i>
+                    </div>
+                </div>
+                <div class="title-meta-group">
+                    <div class="title-row">
+                        <h2 class="title-text">AI Image Generator</h2>
+                        <div class="live-pill" style="color: #ec4899; background: rgba(236, 72, 153, 0.1); border-color: rgba(236, 72, 153, 0.25);">
+                            <span class="pulse-dot" style="background: #ec4899; box-shadow: 0 0 8px #ec4899;"></span>
+                            <span>Local AI Ready</span>
+                        </div>
+                    </div>
+                    <p class="subtitle-text">Describe your vision in detail, and I will bring it to life.</p>
+                </div>
+            </div>
+            <div class="header-laser-line" style="background: linear-gradient(90deg, transparent, #ec4899, #8b5cf6, transparent);"></div>
+        </header>
+
+        <!-- Workspace Container -->
+        <div class="image-workspace">
+            
+            <!-- Generation Form Card -->
+            <div class="glass-card generation-panel">
+                <form id="generatorForm" method="POST" action="">
+                    {% csrf_token %}
+                    
+                    <label class="prompt-label">
+                        <i class="fa-solid fa-wand-magic-sparkles" style="color: #ec4899;"></i> What do you want to create?
+                    </label>
+                    
+                    <div class="prompt-container">
+                        <textarea 
+                            id="promptInput"
+                            name="prompt" 
+                            placeholder="Describe your vision... E.g., A futuristic cyberpunk city at night with neon lights reflecting in rain puddles, highly detailed, 8k resolution" 
+                            rows="4"
+                            required
+                            class="prompt-input"
+                        ></textarea>
+                        
+                        <div class="action-row">
+                            <span class="hint-text">
+                                <i class="fa-solid fa-lightbulb" style="color: #fbbf24;"></i> Pro tip: Be as descriptive as possible for the best results.
+                            </span>
+                            
+                            <button type="submit" class="generate-btn">
+                                <i class="fa-solid fa-bolt"></i> Generate Image
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Image Gallery Grid / Recent Creations Box -->
+            <div class="gallery-section">
+                <h3 style="color: white; margin-bottom: 24px; font-weight: 600; font-size: 18px;">Recent Creations</h3>
+                
+                <div id="resultContainer" style="border: 2px dashed #334155; border-radius: 16px; padding: 40px; text-align: center; background-color: rgba(15, 23, 42, 0.4);">
+                    <div class="placeholder-content">
+                        <i class="fa-regular fa-image" style="font-size: 40px; color: #64748b; margin-bottom: 12px;"></i>
+                        <p style="color: #64748b; margin: 0;">Your generated masterpieces will appear here.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- UI Styling -->
+<style>
+    .elite-header {
+        position: relative;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.7) 100%);
+        backdrop-filter: blur(30px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 28px 36px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    .header-main-content { display: flex; align-items: center; gap: 20px; position: relative; z-index: 2; }
+    .icon-wrapper {
+        display: flex; align-items: center; justify-content: center; width: 58px; height: 58px;
+        border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .icon-wrapper i { color: #ffffff; font-size: 26px; }
+    .title-meta-group { display: flex; flex-direction: column; gap: 6px; }
+    .title-row { display: flex; align-items: center; gap: 14px; }
+    .title-text {
+        background: linear-gradient(135deg, #ffffff 20%, #cbd5e1 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        font-weight: 800; font-size: 26px; margin: 0; line-height: 1.2;
+    }
+    .live-pill {
+        display: inline-flex; align-items: center; gap: 6px; 
+        border: 1px solid; padding: 3px 10px; border-radius: 20px;
+        font-size: 11px; font-weight: 600;
+    }
+    .pulse-dot { width: 6px; height: 6px; border-radius: 50%; animation: dotPulse 2s infinite; }
+    .subtitle-text { color: #94a3b8; font-size: 14px; margin: 0; }
+    .header-laser-line { position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; }
+
+    .image-workspace {
+        padding: 40px;
+        max-width: 1000px;
+        margin: 0 auto;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .glass-card {
+        background: rgba(30, 41, 59, 0.6);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        margin-bottom: 45px;
+    }
+
+    .prompt-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #f8fafc;
+        font-weight: 600;
+        margin-bottom: 16px;
+        font-size: 18px;
+        letter-spacing: 0.3px;
+    }
+
+    .prompt-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .prompt-input {
+        width: 100%;
+        box-sizing: border-box;
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 20px;
+        border-radius: 16px;
+        color: #ffffff;
+        font-size: 16px;
+        line-height: 1.5;
+        outline: none;
+        resize: vertical;
+        transition: all 0.3s ease;
+        font-family: 'Poppins', sans-serif;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .prompt-input::placeholder { color: #64748b; }
+
+    .prompt-input:focus {
+        border-color: #ec4899;
+        background: rgba(15, 23, 42, 0.95);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 0 0 4px rgba(236, 72, 153, 0.15);
+    }
+
+    .action-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .hint-text {
+        color: #94a3b8;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .generate-btn {
+        background: linear-gradient(135deg, #ec4899, #8b5cf6);
+        color: white;
+        border: none;
+        padding: 14px 32px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(236, 72, 153, 0.4);
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .generate-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 25px rgba(236, 72, 153, 0.6);
+    }
+
+    .generate-btn:active { transform: translateY(1px); }
+
+    @keyframes dotPulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.4); opacity: 0.5; }
+    }
+</style>
+
+<!-- Single, clean AJAX script to inject the image inside #resultContainer -->
+<script>
+    document.getElementById("generatorForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
+
+        const inputField = document.getElementById("promptInput");
+        const resultContainer = document.getElementById("resultContainer");
+        const promptText = inputField.value.trim();
+
+        if (!promptText) return;
+
+        // Show loading state inside the box
+        resultContainer.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <p style="color: #94a3b8; font-size: 16px; margin: 0;">Generating your masterpiece locally... Please wait ⏳</p>
+            </div>
+        `;
+
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        try {
+            const response = await fetch("", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": csrftoken
+                },
+                body: new URLSearchParams({ "prompt": promptText })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Dynamically display the image right inside the Recent Creations box
+                resultContainer.innerHTML = `
+                    <div style="text-align: center;">
+                        <img src="${data.image_url}" alt="Generated Image" style="max-width: 100%; max-height: 450px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+                        <br>
+                        <a href="${data.image_url}" target="_blank" style="display: inline-block; margin-top: 12px; color: #60a5fa; text-decoration: none; font-weight: 500;">Download / View Full Size</a>
+                    </div>
+                `;
+            } else {
+                resultContainer.innerHTML = `<p style="color: #ef4444; text-align: center;">Error: ${data.message || "Failed to generate."}</p>`;
+            }
+
+        } catch (error) {
+            console.error("Network Error:", error);
+            resultContainer.innerHTML = `<p style="color: #ef4444; text-align: center;">An error occurred connecting to the server.</p>`;
+        }
+    });
+</script>
+
+</body>
+</html>

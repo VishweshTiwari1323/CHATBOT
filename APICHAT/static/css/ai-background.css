@@ -1,0 +1,192 @@
+/*==========================================
+        AI CANVAS BACKGROUND
+==========================================*/
+
+#aiCanvas{
+
+    position:fixed;
+
+    top:0;
+
+    left:0;
+
+    width:100%;
+
+    height:100%;
+
+    z-index:-100;
+
+    display:block;
+
+    background:#030712;
+
+}
+
+/*==========================================
+      BODY
+==========================================*/
+
+body{
+
+    overflow:hidden;
+
+    background:#030712;
+
+}
+
+/*==========================================
+      BREATHING GLOW
+==========================================*/
+
+body::before{
+
+    content:"";
+
+    position:fixed;
+
+    width:160vmax;
+
+    height:160vmax;
+
+    left:50%;
+
+    top:50%;
+
+    transform:translate(-50%,-50%);
+
+    border-radius:50%;
+
+    background:
+
+        radial-gradient(
+
+            circle,
+
+            rgba(59,130,246,.18),
+
+            rgba(99,102,241,.10),
+
+            transparent 70%
+
+        );
+
+    animation:breathe 10s ease-in-out infinite;
+
+    pointer-events:none;
+
+    z-index:-90;
+
+}
+
+/*==========================================
+      AURORA
+==========================================*/
+
+body::after{
+
+    content:"";
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+
+    radial-gradient(circle at 20% 20%,
+
+    rgba(6,182,212,.10),
+
+    transparent 35%),
+
+
+    radial-gradient(circle at 80% 70%,
+
+    rgba(79,70,229,.12),
+
+    transparent 40%),
+
+    radial-gradient(circle at center,
+
+    rgba(37,99,235,.08),
+
+    transparent 60%);
+
+    animation:aurora 18s ease-in-out infinite alternate;
+
+    pointer-events:none;
+
+    z-index:-80;
+
+}
+
+/*==========================================
+        BREATHING
+==========================================*/
+
+@keyframes breathe{
+
+    0%{
+
+        transform:
+
+        translate(-50%,-50%)
+
+        scale(.95);
+
+        opacity:.4;
+
+    }
+
+    50%{
+
+        transform:
+
+        translate(-50%,-50%)
+
+        scale(1.12);
+
+        opacity:.9;
+
+    }
+
+    100%{
+
+        transform:
+
+        translate(-50%,-50%)
+
+        scale(.95);
+
+        opacity:.4;
+
+    }
+
+}
+
+/*==========================================
+        AURORA
+==========================================*/
+
+@keyframes aurora{
+
+    from{
+
+        transform:
+
+        scale(1)
+
+        rotate(0deg);
+
+    }
+
+    to{
+
+        transform:
+
+        scale(1.15)
+
+        rotate(6deg);
+
+    }
+
+}

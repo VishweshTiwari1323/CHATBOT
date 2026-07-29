@@ -1,0 +1,399 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Profile | AI Chatbot</title>
+
+    <link rel="stylesheet"
+          href="{% static 'css/profile.css' %}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="profile-container">
+
+    <!-- ============================= -->
+    <!-- LEFT PROFILE CARD -->
+    <!-- ============================= -->
+
+    <aside class="profile-card">
+
+        <div class="profile-image">
+
+            {% if request.user.profile.image %}
+                <img src="{{ request.user.profile.image.url }}"
+                     alt="Profile">
+            {% else %}
+                <img src="{% static 'images/default-user.png' %}"
+                     alt="Profile">
+            {% endif %}
+
+            <span class="online"></span>
+
+        </div>
+
+        <h2>{{ request.user.username }}</h2>
+
+        <p class="role">
+
+            <i class="fa-solid fa-robot"></i>
+
+            AI Chatbot User
+
+        </p>
+
+        <div class="user-info">
+
+            <div>
+
+                <i class="fa-solid fa-envelope"></i>
+
+                {{ request.user.email }}
+
+            </div>
+
+            <div>
+
+                <i class="fa-solid fa-calendar"></i>
+
+                Joined
+
+                {{ request.user.date_joined|date:"d M Y" }}
+
+            </div>
+
+        </div>
+
+        <div class="profile-buttons">
+
+            <a href="{% url 'edit_profile' %}"
+               class="btn primary">
+
+                <i class="fa-solid fa-user-pen"></i>
+
+                Edit Profile
+
+            </a>
+
+            <a href="{% url 'logout' %}"
+               class="btn danger">
+
+                <i class="fa-solid fa-right-from-bracket"></i>
+
+                Logout
+
+            </a>
+
+        </div>
+
+    </aside>
+
+    <!-- ============================= -->
+    <!-- RIGHT CONTENT -->
+    <!-- ============================= -->
+
+    <main class="profile-content">
+
+        <section class="hero">
+
+            <div>
+
+                <h1>
+
+                    Welcome,
+
+                    {{ request.user.first_name|default:request.user.username }}
+
+                    👋
+
+                </h1>
+
+                <p>
+
+                    Manage your account, view AI usage,
+                    edit your profile and personalize
+                    your chatbot experience.
+
+                </p>
+
+            </div>
+
+            <div class="hero-icon">
+
+                <i class="fa-solid fa-brain"></i>
+
+            </div>
+
+        </section>
+
+        <!-- Statistics -->
+
+        <section class="stats">
+
+            <div class="stat-card">
+
+                <i class="fa-solid fa-comments"></i>
+
+                <h3 id="chatCount">
+
+                    {{ chat_count }}
+
+                </h3>
+
+                <span>Total Chats</span>
+
+            </div>
+
+            <div class="stat-card">
+
+                <i class="fa-solid fa-robot"></i>
+
+                <h3 id="responseCount">
+
+                    {{ response_count }}
+
+                </h3>
+
+                <span>AI Responses</span>
+
+            </div>
+
+            <div class="stat-card">
+
+                <i class="fa-solid fa-bookmark"></i>
+
+                <h3 id="savedCount">
+
+                    {{ saved_count }}
+
+                </h3>
+
+                <span>Saved Chats</span>
+
+            </div>
+
+            <div class="stat-card">
+
+                <i class="fa-solid fa-calendar-day"></i>
+
+                <h3 id="todayCount">
+
+                    {{ today_count }}
+
+                </h3>
+
+                <span>Today's Chats</span>
+
+            </div>
+
+        </section>
+
+        <!-- ============================= -->
+        <!-- ACHIEVEMENTS -->
+        <!-- ============================= -->
+
+        <section class="achievements">
+
+            <div class="section-title">
+
+                <h2>
+
+                    <i class="fa-solid fa-trophy"></i>
+
+                    Achievements
+
+                </h2>
+
+            </div>
+
+            <div class="achievement-grid">
+
+                <div class="achievement-card">
+
+                    <div class="achievement-icon">
+
+                        <i class="fa-solid fa-rocket"></i>
+
+                    </div>
+
+                    <h3>AI Explorer</h3>
+
+                    <p>Completed your first AI conversation.</p>
+
+                </div>
+
+                <div class="achievement-card">
+
+                    <div class="achievement-icon">
+
+                        <i class="fa-solid fa-fire"></i>
+
+                    </div>
+
+                    <h3>Daily Streak</h3>
+
+                    <p>Keep chatting every day to build your streak.</p>
+
+                </div>
+
+                <div class="achievement-card">
+
+                    <div class="achievement-icon">
+
+                        <i class="fa-solid fa-brain"></i>
+
+                    </div>
+
+                    <h3>Knowledge Seeker</h3>
+
+                    <p>Asked more than 100 AI questions.</p>
+
+                </div>
+
+                <div class="achievement-card">
+
+                    <div class="achievement-icon">
+
+                        <i class="fa-solid fa-star"></i>
+
+                    </div>
+
+                    <h3>Premium User</h3>
+
+                    <p>Unlocked advanced AI experience.</p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ============================= -->
+        <!-- RECENT ACTIVITY (DYNAMIC) -->
+        <!-- ============================= -->
+
+        <section class="activity">
+
+            <div class="section-title">
+
+                <h2>
+
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+
+                    Recent Activity
+
+                </h2>
+
+            </div>
+
+            <div class="timeline">
+
+                {% for chat in recent_chats %}
+                    <div class="timeline-item">
+
+                        <div class="timeline-dot"></div>
+
+                        <div class="timeline-content">
+
+                            <h3>Asked AI: "{{ chat.message|truncatechars:50 }}"</h3>
+
+                            <p>{{ chat.created_at|timesince }} ago &bull; AI response generated successfully.</p>
+
+                        </div>
+
+                    </div>
+                {% empty %}
+                    <div class="timeline-item">
+
+                        <div class="timeline-dot"></div>
+
+                        <div class="timeline-content">
+
+                            <h3>Account Created</h3>
+
+                            <p>Joined on {{ request.user.date_joined|date:"d M Y" }}. Start chatting to see your movements here!</p>
+
+                        </div>
+
+                    </div>
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+        <!-- ============================= -->
+        <!-- QUICK ACTIONS -->
+        <!-- ============================= -->
+
+        <section class="quick-actions">
+
+            <div class="section-title">
+
+                <h2>
+
+                    <i class="fa-solid fa-bolt"></i>
+
+                    Quick Actions
+
+                </h2>
+
+            </div>
+
+            <div class="action-grid">
+
+                <a href="{% url 'chatbot' %}" class="action-card">
+
+                    <i class="fa-solid fa-comments"></i>
+
+                    <span>Start Chat</span>
+
+                </a>
+
+                <a href="{% url 'history' %}" class="action-card">
+
+                    <i class="fa-solid fa-clock"></i>
+
+                    <span>Chat History</span>
+
+                </a>
+
+                <a href="{% url 'change_password' %}" class="action-card">
+
+                    <i class="fa-solid fa-key"></i>
+
+                    <span>Change Password</span>
+
+                </a>
+
+                <a href="{% url 'edit_profile' %}" class="action-card">
+
+                    <i class="fa-solid fa-user-gear"></i>
+
+                    <span>Edit Profile</span>
+
+                </a>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="{% static 'js/profile.js' %}"></script>
+
+</body>
+</html>

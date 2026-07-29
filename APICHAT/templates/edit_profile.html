@@ -1,0 +1,211 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile | AI Chatbot</title>
+    <link rel="stylesheet" href="{% static 'css/edit_profile.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+<body>
+
+<!-- Central Intro Animation Loader -->
+<div class="page-loader" id="pageLoader">
+    <div class="loader-core">
+        <i class="fa-solid fa-user-gear"></i>
+        <div class="loader-pulse"></div>
+    </div>
+    <p class="loader-text">Loading Edit Profile...</p>
+</div>
+
+<!-- Animated AI Background -->
+<canvas id="aiCanvas"></canvas>
+
+<!-- Messages Notification -->
+{% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation{% else %}fa-circle-check{% endif %}"></i>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<form method="POST" enctype="multipart/form-data" class="edit-form-wrapper" id="editProfileForm">
+    {% csrf_token %}
+
+    <div class="edit-container">
+
+        <!-- ====================================== -->
+        <!-- LEFT PROFILE CARD -->
+        <!-- ====================================== -->
+
+        <aside class="profile-card">
+            <div class="image-box">
+                {% if request.user.profile.image %}
+                    <img id="previewImage" src="{{ request.user.profile.image.url }}" alt="Profile Picture">
+                {% else %}
+                    <img id="previewImage" src="{% static 'images/default-avatar.svg' %}" alt="Profile Picture">
+                {% endif %}
+
+                <label for="profileImage" class="camera-btn" title="Upload profile picture">
+                    <i class="fa-solid fa-camera"></i>
+                </label>
+                <input type="file" id="profileImage" name="image" accept="image/*" hidden>
+            </div>
+
+            <h2>{{ request.user.username }}</h2>
+
+            <p class="role">
+                <i class="fa-solid fa-robot"></i>
+                AI Chatbot User
+            </p>
+
+            <div class="profile-details">
+                <div>
+                    <i class="fa-solid fa-envelope"></i>
+                    <span>{{ request.user.email }}</span>
+                </div>
+                <div>
+                    <i class="fa-solid fa-calendar"></i>
+                    <span>Joined {{ request.user.date_joined|date:"d M Y" }}</span>
+                </div>
+                <div class="clock-detail">
+                    <i class="fa-regular fa-clock"></i>
+                    <span id="liveClock">--:--:--</span>
+                </div>
+            </div>
+
+            <a href="{% url 'profile' %}" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back to Profile
+            </a>
+        </aside>
+
+        <!-- ====================================== -->
+        <!-- RIGHT SIDE -->
+        <!-- ====================================== -->
+
+        <main class="edit-content">
+
+            <div class="hero">
+                <div>
+                    <h1 id="heroTitle">Edit Profile, {{ request.user.username }}</h1>
+                    <p>Update your personal information, profile picture, bio, and account details.</p>
+                </div>
+                <div class="hero-icon">
+                    <i class="fa-solid fa-user-gear"></i>
+                </div>
+            </div>
+
+            <!-- EDIT FORM SECTION -->
+            <div class="edit-form">
+                <div class="form-title">
+                    <h3><i class="fa-solid fa-id-card"></i> Personal Details</h3>
+                </div>
+
+                <div class="input-grid">
+                    <!-- Username -->
+                    <div class="input-box">
+                        <label for="usernameInput">
+                            <i class="fa-solid fa-user"></i> Username
+                        </label>
+                        <input type="text"
+                               id="usernameInput"
+                               name="username"
+                               value="{{ request.user.username }}"
+                               placeholder="Enter username"
+                               required>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="input-box">
+                        <label for="emailInput">
+                            <i class="fa-solid fa-envelope"></i> Email Address
+                        </label>
+                        <input type="email"
+                               id="emailInput"
+                               name="email"
+                               value="{{ request.user.email }}"
+                               placeholder="Enter email address"
+                               required>
+                    </div>
+
+                    <!-- First Name -->
+                    <div class="input-box">
+                        <label for="firstNameInput">
+                            <i class="fa-solid fa-signature"></i> First Name
+                        </label>
+                        <input type="text"
+                               id="firstNameInput"
+                               name="first_name"
+                               value="{{ request.user.first_name }}"
+                               placeholder="First Name">
+                    </div>
+
+                    <!-- Last Name -->
+                    <div class="input-box">
+                        <label for="lastNameInput">
+                            <i class="fa-solid fa-signature"></i> Last Name
+                        </label>
+                        <input type="text"
+                               id="lastNameInput"
+                               name="last_name"
+                               value="{{ request.user.last_name }}"
+                               placeholder="Last Name">
+                    </div>
+                </div>
+
+                <!-- Bio Textarea -->
+                <div class="input-box textarea-box">
+                    <label for="bioInput">
+                        <i class="fa-solid fa-pen-to-square"></i> Bio
+                    </label>
+                    <textarea id="bioInput"
+                              name="bio"
+                              rows="4"
+                              placeholder="Tell us something about yourself...">{{ request.user.profile.bio }}</textarea>
+                </div>
+
+                <!-- Form Buttons -->
+                <div class="form-actions">
+                    <button type="submit" class="save-btn">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                    </button>
+                    <button type="reset" class="reset-btn">
+                        <i class="fa-solid fa-rotate-left"></i> Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- SECURITY & ACCOUNT -->
+            <div class="danger-zone">
+                <div class="danger-header">
+                    <h3><i class="fa-solid fa-shield-halved"></i> Security & Account</h3>
+                    <p>Manage your security preferences and account actions.</p>
+                </div>
+                <div class="danger-actions">
+                    <a href="{% url 'change_password' %}" class="sec-btn">
+                        <i class="fa-solid fa-key"></i> Change Password
+                    </a>
+                    <a href="{% url 'logout' %}" class="delete-btn">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </a>
+                </div>
+            </div>
+
+        </main>
+
+    </div>
+</form>
+
+<script src="{% static 'js/ai-background.js' %}"></script>
+<script src="{% static 'js/edit_profile.js' %}"></script>
+
+</body>
+</html>

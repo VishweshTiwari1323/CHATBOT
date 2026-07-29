@@ -1,0 +1,23 @@
+# Secret Environment Variables
+*.env
+APICHAT/API.env
+db.sqlite3
+venv/
+media/
+.vscode/
+# Database
+db.sqlite3
+
+# Python Cache
+__pycache__/
+*/__pycache__/
+
+# Virtual Environment
+venv/
+env/
+
+# Uploaded Media
+media/
+
+# IDE files
+.vscode/
