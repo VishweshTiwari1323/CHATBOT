@@ -1,17 +1,16 @@
-"""
-WSGI config for chatbot project.
-
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/6.0/howto/deployment/wsgi/
-"""
 import os
-from django.core.wsgi import get_wsgi_application
+import sys
+from pathlib import Path
+
+# Add project root directory to Python path for Vercel serverless execution
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.append(str(BASE_DIR))
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'chatbot.settings')
 
+from django.core.wsgi import get_wsgi_application
+
 application = get_wsgi_application()
 
-# Add this line for Vercel serverless deployment
+# Entry point for Vercel
 app = application
