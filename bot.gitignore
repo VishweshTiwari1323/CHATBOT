@@ -1,9 +1,26 @@
-Django==6.0.7
-whitenoise==6.12.0
-python-dotenv==1.2.2
-requests==2.34.2
-replicate==1.0.7
-openai==2.48.0
-google-generativeai==0.8.6
-pydantic==2.13.4
-gunicorn==26.0.0
+# Secret Environment Variables
+*.env
+APICHAT/API.env
+db.sqlite3
+venv/
+media/
+.vscode/
+# Database
+db.sqlite3
+
+# Python Cache
+__pycache__/
+*/__pycache__/
+
+# Virtual Environment
+venv/
+.venv/
+*.pyc
+__pycache__/
+db.sqlite3
+
+# Uploaded Media
+media/
+
+# IDE files
+.vscode/
